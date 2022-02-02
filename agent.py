@@ -21,7 +21,11 @@ class Agent:
         self.epsilon = 1
         self.epsilon_min = 0.1
         self.epsilon_decay = 0.9
+        self.temporary_model = self.build_model(self.shape)
         self.model = self.build_model(self.shape)
+
+    def update_actual_weights(self):
+        self.model.set_weights(self.temporary_model.get_weights())
 
     def build_model(self, shape):
         model = Sequential()
@@ -43,7 +47,7 @@ class Agent:
     def step(self, state):
         padded_state = np.expand_dims(state, axis=0)
         if np.random.rand() > self.epsilon:
-            act_values = self.model.predict(padded_state)
+            act_values = self.temporary_model.predict(padded_state)
             # print(act_values)
             action_index = np.argmax(act_values[0])
         else:

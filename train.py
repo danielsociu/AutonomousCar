@@ -30,7 +30,7 @@ class DQN_Agent(Agent):
         train_frames = []
         train_labels = []
         for index, (frame, action_taken, reward, next_frame, solved) in enumerate(batch):
-            predictions = self.model.predict(np.expand_dims(frame, axis=0))[0]
+            predictions = self.temporary_model.predict(np.expand_dims(frame, axis=0))[0]
             # print(index)
             if solved:
                 predictions[action_taken] = reward
@@ -41,10 +41,11 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        fit_hist = self.model.fit(train_frames, train_labels, epochs=1, verbose=1)
-        plt_metric(history=fit_hist.history, metric="loss", title="mean_squared_error", nr=episode)
+        self.temporary_model.fit(train_frames, train_labels, epochs=1, verbose=1)
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
 
-    def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=5, show_env=True):
+    def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
         agent: Agent = Agent()
@@ -94,6 +95,9 @@ class DQN_Agent(Agent):
                                           global_step=episode)
                         writer.flush()
                         break
+
+            if episode % update_frequency == 0:
+                agent.update_actual_weights()
 
             if episode % save_frequency == 0:
                 agent.save(writer_logdir + "/model_" + str(episode)+".h5")
