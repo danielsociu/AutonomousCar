@@ -1,7 +1,9 @@
 from train import *
 import gym
+import environment
 
 train_model = True
-env = gym.make('CarRacing-v0')
+env = environment.CarRacing()
+dqn_agent = DQN_Agent(env)
 if train_model:
-    train(env)
+    dqn_agent.train()
