@@ -3,7 +3,20 @@ from agent import *
 import numpy as np
 import random
 from collections import deque
+from torch.utils.tensorboard import SummaryWriter
+import matplotlib.pyplot as plt
 
+
+def plt_metric(history, metric, title, has_valid=True):
+    plt.plot(history[metric])
+    if has_valid:
+        plt.plot(history["val_" + metric])
+        plt.legend(["train", "validation"], loc="upper left")
+    plt.title(title)
+    plt.ylabel(metric)
+    plt.xlabel("epoch")
+    plt.savefig("customModel-5_" + title + "_" + nr + ".png", bbox_inches='tight', dpi=300)
+    plt.show()
 
 class DQN_Agent(Agent):
     def __init__(self, env, history_size=128):
@@ -28,10 +41,12 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        self.model.fit(train_frames, train_labels, epochs=1, verbose=1)
+        fit_hist = self.model.fit(train_frames, train_labels, epochs=1, verbose=1)
+        plt_metric(history=fit_hist.history, metric="loss", title="mean_squared_error")
 
-
-    def train(self, batch_size=32, num_episodes=10000, current_frames=5, show_env=True):
+    def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=5, show_env=True):
+        writer_logdir = 'logs'
+        writer = SummaryWriter(log_dir=writer_logdir)
         agent: Agent = Agent()
         for episode in range(num_episodes):
             state = self.env.reset()
@@ -67,5 +82,18 @@ class DQN_Agent(Agent):
                     premature_stop += 1
                     if premature_stop >= 25:
                         print(
-                            f'Episode {episode} | Total_reward {total_reward} | Accumulated reward {accumulated_reward} | Current_epsilon {agent.epsilon}')
+                            f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {agent.epsilon}')
+                        writer.add_scalar(tag='Total_reward',
+                                          scalar_value=total_reward,
+                                          global_step=episode)
+                        writer.add_scalar(tag='Accumulated_reward',
+                                          scalar_value=accumulated_reward,
+                                          global_step=episode)
+                        writer.add_scalar(tag='Current_epsilon',
+                                          scalar_value=agent.epsilon,
+                                          global_step=episode)
+                        writer.flush()
                         break
+
+            if episode % save_frequency == 0:
+                agent.save(writer_logdir + "/model_" + str(episode)+".h5")

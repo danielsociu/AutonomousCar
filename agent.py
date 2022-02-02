@@ -40,7 +40,6 @@ class Agent:
 
         return model
 
-
     def step(self, state):
         padded_state = np.expand_dims(state, axis=0)
         if np.random.rand() > self.epsilon:
@@ -53,3 +52,6 @@ class Agent:
             # print(len(self.action_space))
             # print(action_index)
         return self.action_space[action_index]
+
+    def save(self, path):
+        self.model.save(path, save_format='h5')
