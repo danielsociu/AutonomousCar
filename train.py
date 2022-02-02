@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 
 
-def plt_metric(history, metric, title, has_valid=True):
+def plt_metric(history, metric, title, nr, has_valid=True):
     plt.plot(history[metric])
     if has_valid:
         plt.plot(history["val_" + metric])
@@ -15,7 +15,7 @@ def plt_metric(history, metric, title, has_valid=True):
     plt.title(title)
     plt.ylabel(metric)
     plt.xlabel("epoch")
-    plt.savefig("customModel-5_" + title + "_" + nr + ".png", bbox_inches='tight', dpi=300)
+    plt.savefig("logs/customModel-5_" + title + "_" + nr + ".png", bbox_inches='tight', dpi=300)
     plt.show()
 
 class DQN_Agent(Agent):
@@ -25,7 +25,7 @@ class DQN_Agent(Agent):
         self.history_size = history_size
         self.history = deque(maxlen=history_size)
 
-    def update_weights(self, batch_size):
+    def update_weights(self, batch_size, episode):
         batch = random.sample(self.history, batch_size)
         train_frames = []
         train_labels = []
@@ -42,7 +42,7 @@ class DQN_Agent(Agent):
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
         fit_hist = self.model.fit(train_frames, train_labels, epochs=1, verbose=1)
-        plt_metric(history=fit_hist.history, metric="loss", title="mean_squared_error")
+        plt_metric(history=fit_hist.history, metric="loss", title="mean_squared_error", nr=episode)
 
     def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=5, show_env=True):
         writer_logdir = 'logs'
@@ -76,7 +76,7 @@ class DQN_Agent(Agent):
                 total_reward += accumulated_reward
 
                 if len(self.history) > batch_size:
-                    self.update_weights(batch_size)
+                    self.update_weights(batch_size, episode)
 
                 if accumulated_reward < 0:
                     premature_stop += 1
