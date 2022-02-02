@@ -6,7 +6,8 @@ def get_processed_image(state):
     image = image[16:, 16:]
     image = image[:-16, :-16].astype(float)
     image /= 255.0
-    # image = cv2.resize(image, (72, 72))
-    cv2.imshow('image', image)
-    cv2.waitKey(0)
+    # image = cv2.resize(image, (64, 64))
+    # cv2.imshow('image', image)
+    # cv2.waitKey(0)
+    # print(image.shape)
     return image
