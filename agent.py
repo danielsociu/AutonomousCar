@@ -34,7 +34,9 @@ class Agent:
         self.model.set_weights(self.temporary_model.get_weights())
 
     def play_model(self, path, num_episodes=5):
+        frame_skip = False
         self.load(path)
+        self.epsilon = 0.0
         for e in range(num_episodes):
             state = self.env.reset()
             frame = image_processing.get_processed_image(state)
@@ -46,12 +48,14 @@ class Agent:
                 # cv2.imshow('test', frame)
                 # cv2.waitKey(0)
 
-                for _ in range(self.current_frames):
-                    # print(action)
+                if frame_skip:
+                    for _ in range(self.current_frames):
+                        # print(action)
+                        next_state, reward, solved, _ = self.env.step(action)
+                        if solved:
+                            break
+                else:
                     next_state, reward, solved, _ = self.env.step(action)
-                    if solved:
-                        break
-                # next_state, reward, solved, _ = self.env.step(action)
 
                 next_frame = image_processing.get_processed_image(next_state)
                 frame = next_frame
@@ -62,13 +66,16 @@ class Agent:
 
     def build_model(self, shape):
         model = Sequential()
-        model.add(Conv2D(filters=64, kernel_size=(7, 7), activation='relu', strides=3, input_shape=(shape[0], shape[1], 1)))
+        model.add(Conv2D(filters=32, kernel_size=(7, 7), activation='relu', strides=3, input_shape=(shape[0], shape[1], 1)))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Conv2D(filters=128, kernel_size=(5, 5), activation="relu"))
+        model.add(Conv2D(filters=64, kernel_size=(5, 5), activation="relu"))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Conv2D(filters=128, kernel_size=(3, 3), activation="relu"))
         model.add(Dropout(0.2, seed=42))
 
         model.add(Flatten())
 
+        model.add(Dense(128, activation='relu'))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(len(self.action_space), activation=None))
         model.compile(loss='mean_squared_error', optimizer=Adam(learning_rate=self.LR))

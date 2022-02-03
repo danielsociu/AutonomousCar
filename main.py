@@ -2,8 +2,8 @@ from train import *
 import gym
 import environment
 
-train_model = True
-model_used = "./logs/model_6_1.h5"
+train_model = False
+model_used = "./logs/model_144_2.h5"
 episodes = 50
 run_nr = 2
 env = environment.CarRacing()

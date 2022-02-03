@@ -81,8 +81,8 @@ class DQN_Agent(Agent):
                 self.history.append((frame, self.action_space.index(action), accumulated_reward, next_frame, solved))
 
                 # Give better reward for acceleration
-                if action[1] == 0.7 and action[2] == 0:
-                    accumulated_reward *= 1.5
+                if action[1] == 0.5 and action[2] == 0:
+                    accumulated_reward *= 1.1
 
                 total_reward += accumulated_reward
 
@@ -103,7 +103,7 @@ class DQN_Agent(Agent):
                 writer.flush()
                 if accumulated_reward < 0:
                     premature_stop += 1
-                    if premature_stop >= 100:
+                    if premature_stop >= 50:
                         print(
                             f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {self.epsilon}')
                         writer.add_scalar(tag='Total_reward',
