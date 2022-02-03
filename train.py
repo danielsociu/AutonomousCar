@@ -16,7 +16,7 @@ def plt_metric(history, metric, episode, nr):
     plt.show()
 
 class DQN_Agent(Agent):
-    def __init__(self, env, history_size=512, current_frames=3):
+    def __init__(self, env, history_size=1024, current_frames=3):
         super().__init__(env, current_frames)
         self.history_size = history_size
         self.history = deque(maxlen=history_size)
@@ -45,8 +45,7 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=6, verbose=0,
-                                                           batch_size=batch_size//2)
+        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
         return temporary_model_history.history['loss']
@@ -55,6 +54,7 @@ class DQN_Agent(Agent):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
         if model_used:
+            self.epsilon = 0.098
             self.load(model_used)
         tensorboard_index = 0
         for episode in range(num_episodes):
@@ -85,7 +85,7 @@ class DQN_Agent(Agent):
 
                 # Give better reward for acceleration
                 if action[1] == 0.5 and action[2] == 0:
-                    accumulated_reward *= 1.1
+                    accumulated_reward *= 1.15
 
                 total_reward += accumulated_reward
 
@@ -106,7 +106,7 @@ class DQN_Agent(Agent):
                 writer.flush()
                 if accumulated_reward < 0:
                     premature_stop += 1
-                    if premature_stop >= 75:
+                    if premature_stop >= 100:
                         print(
                             f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {self.epsilon}')
                         writer.add_scalar(tag='Total_reward',

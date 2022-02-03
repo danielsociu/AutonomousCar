@@ -4,7 +4,7 @@ import environment
 
 train_model = False
 load_model = True
-model_used = "./logs/branch_930_runs/model_270_4.h5"
+model_used = "./logs/model_696_4.h5"
 episodes = 50
 run_nr = 5
 env = environment.CarRacing()
