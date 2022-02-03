@@ -64,12 +64,12 @@ class Agent:
         model = Sequential()
         model.add(Conv2D(filters=6, kernel_size=(7, 7), activation='relu', strides=3, input_shape=(shape[0], shape[1], 1)))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Conv2D(filters=8, kernel_size=(5, 5), activation="relu", padding='same'))
+        model.add(Conv2D(filters=8, kernel_size=(5, 5), activation="relu"))
         model.add(Dropout(0.2, seed=42))
 
         model.add(Flatten())
 
-        model.add(Dense(128, activation='relu'))
+        model.add(Dense(64, activation='relu'))
         model.add(Dense(len(self.action_space), activation=None))
         model.compile(loss='mean_squared_error', optimizer=Adam(learning_rate=self.LR))
 
