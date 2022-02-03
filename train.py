@@ -7,15 +7,12 @@ from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 
 
-def plt_metric(history, metric, title, nr, has_valid=True):
+def plt_metric(history, metric, episode, nr):
     plt.plot(history[metric])
-    if has_valid:
-        plt.plot(history["val_" + metric])
-        plt.legend(["train", "validation"], loc="upper left")
-    plt.title(title)
+    plt.title(episode)
     plt.ylabel(metric)
     plt.xlabel("epoch")
-    plt.savefig("logs/customModel-5_" + title + "_" + nr + ".png", bbox_inches='tight', dpi=300)
+    plt.savefig("logs/customModel-5_" + episode + "_" + nr + ".png", bbox_inches='tight', dpi=300)
     plt.show()
 
 class DQN_Agent(Agent):
@@ -40,11 +37,12 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        self.temporary_model.fit(train_frames, train_labels, epochs=2, verbose=1)
+        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=2, verbose=1)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+        return temporary_model_history['loss']
 
-    def train(self, batch_size=64, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True):
+    def train(self, batch_size=64, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
         for episode in range(num_episodes):
@@ -54,7 +52,7 @@ class DQN_Agent(Agent):
             total_reward = 0
             premature_stop = 0
             solved = False
-
+            temporary_model_history = None
             while True:
                 if show_env:
                     self.env.render()
@@ -75,7 +73,7 @@ class DQN_Agent(Agent):
                 total_reward += accumulated_reward
 
                 if len(self.history) > batch_size:
-                    self.update_weights(batch_size, episode)
+                    temporary_model_history = self.update_weights(batch_size, episode)
 
                 frame = next_frame
                 # cv2.imshow('test', frame)
@@ -101,6 +99,8 @@ class DQN_Agent(Agent):
 
             if episode % update_frequency == 0:
                 self.update_actual_weights()
+                if temporary_model_history is not None:
+                    plt_metric(temporary_model_history, "loss", episode, run_nr)
 
             if episode % save_frequency == 0:
-                self.save(writer_logdir + "/model_" + str(episode)+".h5")
+                self.save(writer_logdir + "/model_" + str(episode)+ "_" + str(run_nr) + ".h5")
