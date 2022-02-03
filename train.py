@@ -16,7 +16,7 @@ def plt_metric(history, metric, episode, nr):
     plt.show()
 
 class DQN_Agent(Agent):
-    def __init__(self, env, history_size=512, current_frames=3):
+    def __init__(self, env, history_size=1024, current_frames=3):
         super().__init__(env, current_frames)
         self.history_size = history_size
         self.history = deque(maxlen=history_size)
@@ -81,8 +81,8 @@ class DQN_Agent(Agent):
                 self.history.append((frame, self.action_space.index(action), accumulated_reward, next_frame, solved))
 
                 # Give better reward for acceleration
-                if action[1] == 0.7 and action[2] == 0:
-                    accumulated_reward *= 1.5
+                if action[1] == 0.5 and action[2] == 0:
+                    accumulated_reward *= 1.15
 
                 total_reward += accumulated_reward
 

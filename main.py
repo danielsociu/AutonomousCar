@@ -5,7 +5,7 @@ import environment
 train_model = True
 model_used = "./logs/model_6_1.h5"
 episodes = 50
-run_nr = 2
+run_nr = 4
 env = environment.CarRacing()
 dqn_agent = DQN_Agent(env)
 if train_model:
