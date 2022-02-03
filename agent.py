@@ -20,7 +20,7 @@ class Agent:
             (-1, 0, 0), (0, 0, 0), (1, 0, 0)
         ]
         self.env = env
-        self.shape = (64, 64)
+        self.shape = (84, 96)
         self.LR = 1e-3
         self.current_frames = current_frames
         self.gamma = 0.95
@@ -62,9 +62,9 @@ class Agent:
 
     def build_model(self, shape):
         model = Sequential()
-        model.add(Conv2D(filters=6, kernel_size=(7, 7), activation='relu', strides=3, input_shape=(shape[0], shape[1], 1)))
+        model.add(Conv2D(filters=64, kernel_size=(7, 7), activation='relu', strides=3, input_shape=(shape[0], shape[1], 1)))
         model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Conv2D(filters=8, kernel_size=(5, 5), activation="relu"))
+        model.add(Conv2D(filters=128, kernel_size=(5, 5), activation="relu"))
         model.add(Dropout(0.2, seed=42))
 
         model.add(Flatten())
