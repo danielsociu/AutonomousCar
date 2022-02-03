@@ -80,6 +80,10 @@ class DQN_Agent(Agent):
                 next_frame = image_processing.get_processed_image(next_state)
                 self.history.append((frame, self.action_space.index(action), accumulated_reward, next_frame, solved))
 
+                # Give better reward for acceleration
+                if action[1] == 0.7 and action[2] == 0:
+                    accumulated_reward *= 1.5
+
                 total_reward += accumulated_reward
 
                 if len(self.history) > batch_size:
