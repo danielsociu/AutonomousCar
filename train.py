@@ -85,7 +85,7 @@ class DQN_Agent(Agent):
 
                 # Give better reward for acceleration
                 if action[1] == 0.5 and action[2] == 0:
-                    accumulated_reward *= 1.3
+                    accumulated_reward *= 1.1
 
                 total_reward += accumulated_reward
 
