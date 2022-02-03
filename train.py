@@ -45,14 +45,17 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=1, verbose=1)
+        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=6, verbose=0,
+                                                           batch_size=batch_size//2)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
         return temporary_model_history.history['loss']
 
-    def train(self, batch_size=64, num_episodes=10000, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
+    def train(self, model_used=False, batch_size=64, num_episodes=10000, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
+        if model_used:
+            self.load(model_used)
         tensorboard_index = 0
         for episode in range(num_episodes):
             arr_temporary_model_history = []
@@ -103,7 +106,7 @@ class DQN_Agent(Agent):
                 writer.flush()
                 if accumulated_reward < 0:
                     premature_stop += 1
-                    if premature_stop >= 50:
+                    if premature_stop >= 75:
                         print(
                             f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {self.epsilon}')
                         writer.add_scalar(tag='Total_reward',
