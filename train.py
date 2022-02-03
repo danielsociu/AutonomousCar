@@ -16,8 +16,8 @@ def plt_metric(history, metric, episode, nr):
     plt.show()
 
 class DQN_Agent(Agent):
-    def __init__(self, env, history_size=128):
-        super().__init__(env)
+    def __init__(self, env, history_size=512, current_frames=3):
+        super().__init__(env, current_frames)
         self.history_size = history_size
         self.history = deque(maxlen=history_size)
 
@@ -42,7 +42,7 @@ class DQN_Agent(Agent):
             self.epsilon *= self.epsilon_decay
         return temporary_model_history.history['loss']
 
-    def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
+    def train(self, batch_size=64, num_episodes=10000, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
         for episode in range(num_episodes):
@@ -61,7 +61,7 @@ class DQN_Agent(Agent):
                 action = self.step(frame)
 
                 accumulated_reward = 0
-                for _ in range(current_frames):
+                for _ in range(self.current_frames):
                     # print(action)
                     next_state, reward, solved, _ = self.env.step(action)
                     accumulated_reward += reward
