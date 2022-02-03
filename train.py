@@ -20,8 +20,7 @@ def plt_metric(history, metric, title, nr, has_valid=True):
 
 class DQN_Agent(Agent):
     def __init__(self, env, history_size=128):
-        super().__init__()
-        self.env = env
+        super().__init__(env)
         self.history_size = history_size
         self.history = deque(maxlen=history_size)
 
@@ -41,14 +40,13 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        self.temporary_model.fit(train_frames, train_labels, epochs=1, verbose=1)
+        self.temporary_model.fit(train_frames, train_labels, epochs=2, verbose=1)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True):
+    def train(self, batch_size=64, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
-        agent: Agent = Agent()
         for episode in range(num_episodes):
             state = self.env.reset()
             frame = image_processing.get_processed_image(state)
@@ -61,7 +59,7 @@ class DQN_Agent(Agent):
                 if show_env:
                     self.env.render()
 
-                action = agent.step(frame)
+                action = self.step(frame)
 
                 accumulated_reward = 0
                 for _ in range(current_frames):
@@ -79,25 +77,30 @@ class DQN_Agent(Agent):
                 if len(self.history) > batch_size:
                     self.update_weights(batch_size, episode)
 
+                frame = next_frame
+                # cv2.imshow('test', frame)
+                # cv2.waitKey(0)
+
+                writer.add_scalar(tag='Accumulated_reward',
+                                  scalar_value=accumulated_reward,
+                                  global_step=episode)
+                writer.add_scalar(tag='Current_epsilon',
+                                  scalar_value=self.epsilon,
+                                  global_step=episode)
+                writer.flush()
                 if accumulated_reward < 0:
                     premature_stop += 1
-                    if premature_stop >= 25:
+                    if premature_stop >= 50:
                         print(
-                            f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {agent.epsilon}')
+                            f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {self.epsilon}')
                         writer.add_scalar(tag='Total_reward',
                                           scalar_value=total_reward,
-                                          global_step=episode)
-                        writer.add_scalar(tag='Accumulated_reward',
-                                          scalar_value=accumulated_reward,
-                                          global_step=episode)
-                        writer.add_scalar(tag='Current_epsilon',
-                                          scalar_value=agent.epsilon,
                                           global_step=episode)
                         writer.flush()
                         break
 
             if episode % update_frequency == 0:
-                agent.update_actual_weights()
+                self.update_actual_weights()
 
             if episode % save_frequency == 0:
-                agent.save(writer_logdir + "/model_" + str(episode)+".h5")
+                self.save(writer_logdir + "/model_" + str(episode)+".h5")

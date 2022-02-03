@@ -1,20 +1,25 @@
 import random
+
+import cv2
 import numpy as np
 from collections import deque
+import image_processing
+from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 
 
 class Agent:
-    def __init__(self):
+    def __init__(self, env):
         # Steering, Gas, Break
         self.action_space = [
-            (-1, 0.5, 0.2), (0, 0.5, 0.2), (1, 0.5, 0.2),
-            (-1, 0.5, 0), (0, 0.5, 0), (1, 0.5, 0),
+            (-1, 0.7, 0.2), (0, 0.7, 0.2), (1, 0.7, 0.2),
+            (-1, 0.7, 0), (0, 0.7, 0), (1, 0.7, 0),
             (-1, 0, 0.2), (0, 0, 0.2), (1, 0, 0.2),
             (-1, 0, 0), (0, 0, 0), (1, 0, 0)
         ]
+        self.env = env
         self.shape = (64, 64)
         self.LR = 1e-3
         self.gamma = 0.95
@@ -26,6 +31,28 @@ class Agent:
 
     def update_actual_weights(self):
         self.model.set_weights(self.temporary_model.get_weights())
+
+    def play_model(self, path, num_episodes=5):
+        self.load(path)
+        for e in range(num_episodes):
+            state = self.env.reset()
+            frame = image_processing.get_processed_image(state)
+
+            while True:
+                self.env.render()
+
+                action = self.step(frame)
+                # cv2.imshow('test', frame)
+                # cv2.waitKey(0)
+
+                next_state, reward, solved, _ = self.env.step(action)
+
+                next_frame = image_processing.get_processed_image(next_state)
+                frame = next_frame
+
+                if solved:
+                    print ('solved')
+                    break
 
     def build_model(self, shape):
         model = Sequential()
@@ -59,3 +86,8 @@ class Agent:
 
     def save(self, path):
         self.model.save(path, save_format='h5')
+
+    def load(self, path):
+        self.temporary_model = keras.models.load_model(path)
+        self.update_actual_weights()
+
