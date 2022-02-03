@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 def plt_metric(history, metric, episode, nr):
-    plt.plot(history[metric])
+    plt.plot(history)
     plt.title(episode)
     plt.ylabel(metric)
     plt.xlabel("epoch")
@@ -37,15 +37,16 @@ class DQN_Agent(Agent):
             train_labels.append(predictions)
         train_frames = np.array(train_frames)
         train_labels = np.array(train_labels)
-        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=2, verbose=1)
+        temporary_model_history = self.temporary_model.fit(train_frames, train_labels, epochs=1, verbose=1)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-        return temporary_model_history['loss']
+        return temporary_model_history.history['loss']
 
-    def train(self, batch_size=64, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
+    def train(self, batch_size=32, num_episodes=10000, current_frames=5, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
         for episode in range(num_episodes):
+            arr_temporary_model_history = []
             state = self.env.reset()
             frame = image_processing.get_processed_image(state)
 
@@ -74,6 +75,7 @@ class DQN_Agent(Agent):
 
                 if len(self.history) > batch_size:
                     temporary_model_history = self.update_weights(batch_size, episode)
+                    arr_temporary_model_history.append(temporary_model_history)
 
                 frame = next_frame
                 # cv2.imshow('test', frame)
@@ -100,7 +102,7 @@ class DQN_Agent(Agent):
             if episode % update_frequency == 0:
                 self.update_actual_weights()
                 if temporary_model_history is not None:
-                    plt_metric(temporary_model_history, "loss", episode, run_nr)
+                    plt_metric(arr_temporary_model_history, "loss", str(episode), str(run_nr))
 
             if episode % save_frequency == 0:
-                self.save(writer_logdir + "/model_" + str(episode)+ "_" + str(run_nr) + ".h5")
+                self.save(writer_logdir + "/model_" + str(episode) + "_" + str(run_nr) + ".h5")
