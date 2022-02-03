@@ -69,7 +69,7 @@ class Agent:
 
         model.add(Flatten())
 
-        model.add(Dense(64, activation='relu'))
+        model.add(Dense(128, activation='relu'))
         model.add(Dense(len(self.action_space), activation=None))
         model.compile(loss='mean_squared_error', optimizer=Adam(learning_rate=self.LR))
 
