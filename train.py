@@ -51,9 +51,11 @@ class DQN_Agent(Agent):
             self.epsilon *= self.epsilon_decay
         return temporary_model_history.history['loss']
 
-    def train(self, batch_size=64, num_episodes=10000, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
+    def train(self, model_used=False, batch_size=64, num_episodes=10000, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
+        if model_used:
+            self.load(model_used)
         tensorboard_index = 0
         for episode in range(num_episodes):
             arr_temporary_model_history = []

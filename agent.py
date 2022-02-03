@@ -35,6 +35,7 @@ class Agent:
 
     def play_model(self, path, num_episodes=5):
         self.load(path)
+        self.epsilon = 0
         for e in range(num_episodes):
             state = self.env.reset()
             frame = image_processing.get_processed_image(state)
