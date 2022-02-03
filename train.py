@@ -25,13 +25,21 @@ class DQN_Agent(Agent):
         batch = random.sample(self.history, batch_size)
         train_frames = []
         train_labels = []
+        all_frames = np.array([data[0] for data in batch])
+        all_next_frames = np.array([data[3] for data in batch])
+        all_predictions = self.temporary_model.predict(all_frames)
+        all_future_predictions = self.temporary_model.predict(all_next_frames)
+        # print(all_next_frames.shape)
+        # print(all_predictions)
+        # print(all_future_predictions.shape)
         for index, (frame, action_taken, reward, next_frame, solved) in enumerate(batch):
-            predictions = self.temporary_model.predict(np.expand_dims(frame, axis=0))[0]
-            # print(index)
+            # predictions = self.temporary_model.predict(np.expand_dims(frame, axis=0))[0]
+            predictions = all_predictions[index]
             if solved:
                 predictions[action_taken] = reward
             else:
-                future_predictions = self.model.predict(np.expand_dims(next_frame, axis=0))[0]
+                # future_predictions = self.model.predict(np.expand_dims(next_frame, axis=0))[0]
+                future_predictions = all_future_predictions[index]
                 predictions[action_taken] = reward + self.gamma * np.amax(future_predictions)
             train_frames.append(frame)
             train_labels.append(predictions)
@@ -45,6 +53,7 @@ class DQN_Agent(Agent):
     def train(self, batch_size=64, num_episodes=10000, save_frequency=6, update_frequency=3, show_env=True, run_nr=1):
         writer_logdir = 'logs'
         writer = SummaryWriter(log_dir=writer_logdir)
+        tensorboard_index = 0
         for episode in range(num_episodes):
             arr_temporary_model_history = []
             state = self.env.reset()
@@ -80,17 +89,17 @@ class DQN_Agent(Agent):
                 frame = next_frame
                 # cv2.imshow('test', frame)
                 # cv2.waitKey(0)
-
+                tensorboard_index += 1
                 writer.add_scalar(tag='Accumulated_reward',
                                   scalar_value=accumulated_reward,
-                                  global_step=episode)
+                                  global_step=tensorboard_index)
                 writer.add_scalar(tag='Current_epsilon',
                                   scalar_value=self.epsilon,
-                                  global_step=episode)
+                                  global_step=tensorboard_index)
                 writer.flush()
                 if accumulated_reward < 0:
                     premature_stop += 1
-                    if premature_stop >= 50:
+                    if premature_stop >= 100:
                         print(
                             f'Episode {episode} | Total_reward {total_reward} | Accumulated_reward {accumulated_reward} | Current_epsilon {self.epsilon}')
                         writer.add_scalar(tag='Total_reward',
