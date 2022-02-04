@@ -13,6 +13,7 @@ from tensorflow.keras.optimizers import Adam
 class Agent:
     def __init__(self, env, current_frames):
         # Steering, Gas, Break
+        # spatiul decizional al agentului
         self.action_space = [
             (-1, 0.5, 0.2), (0, 0.5, 0.2), (1, 0.5, 0.2),
             (-1, 0.5, 0), (0, 0.5, 0), (1, 0.5, 0),
@@ -33,6 +34,7 @@ class Agent:
     def update_actual_weights(self):
         self.model.set_weights(self.temporary_model.get_weights())
 
+    # functia de jucare cu un model antrenat
     def play_model(self, path, num_episodes=5):
         frame_skip = False
         self.load(path)
@@ -63,40 +65,46 @@ class Agent:
                 if solved:
                     print ('solved')
                     break
-
+    # construirea modelului
     def build_model(self, shape):
         model = Sequential()
         model.add(Conv2D(filters=64, kernel_size=(7, 7), activation='relu', strides=3, input_shape=(shape[0], shape[1], 1)))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Conv2D(filters=128, kernel_size=(5, 5), activation="relu"))
-        model.add(Dropout(0.2, seed=42))
+        model.add(Dropout(0.2, seed=42)) # dropout pentru a preveni overfitting
 
         model.add(Flatten())
 
         model.add(Dense(64, activation='relu'))
         model.add(Dense(len(self.action_space), activation=None))
+        # MSE deoarece comparam imagini
         model.compile(loss='mean_squared_error', optimizer=Adam(learning_rate=self.LR))
 
         model.summary()  # structura modelului
 
         return model
 
+    # pas in environment
     def step(self, state):
         padded_state = np.expand_dims(state, axis=0)
         if np.random.rand() > self.epsilon:
+            # folosim modelul pentru a decide asupra actiunii
             act_values = self.temporary_model.predict(padded_state)
             # print(act_values)
             action_index = np.argmax(act_values[0])
         else:
+            # face o actiune random
             action_index = np.random.randint(0, len(self.action_space))
             # print(self.action_space)
             # print(len(self.action_space))
             # print(action_index)
         return self.action_space[action_index]
 
+    # salvare model
     def save(self, path):
         self.model.save(path, save_format='h5')
 
+    # incarcare model
     def load(self, path):
         self.temporary_model = keras.models.load_model(path)
         self.update_actual_weights()

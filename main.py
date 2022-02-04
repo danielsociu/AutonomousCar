@@ -6,6 +6,7 @@ train_model = False
 load_model = True
 model_used = "./logs/model_696_4.h5"
 episodes = 50
+# numarul rularii
 run_nr = 5
 env = environment.CarRacing()
 dqn_agent = DQN_Agent(env)
